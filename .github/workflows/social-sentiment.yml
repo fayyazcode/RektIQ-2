@@ -22,6 +22,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Verify database configuration
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Missing GitHub Actions secret DATABASE_URL. Add the Supabase pooled connection URL under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
       - run: npm ci --no-audit --no-fund
       - run: npm run job:social-sentiment
         env:

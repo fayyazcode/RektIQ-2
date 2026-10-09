@@ -92,8 +92,10 @@ curl -s https://api.buffer.com -H "Authorization: Bearer $BUFFER_API_KEY" -H "Co
 
 In the repo, **Settings → Secrets and variables → Actions**:
 
-- **Secrets:** `DATABASE_URL`, `GEMINI_API_KEY`, `GROQ_API_KEY`, `BUFFER_API_KEY`, `REVALIDATE_SECRET`
+- **Secrets:** `DATABASE_URL`, `X_API_BEARER_TOKEN`, `GEMINI_API_KEY`, `GROQ_API_KEY`, `BUFFER_API_KEY`, `REVALIDATE_SECRET`
 - **Variables:** `SITE_URL` (your public URL, used in post links), `BUFFER_CHANNEL_ID`, optionally `BUFFER_ORG_ID`, `GEMINI_MODEL`, `GROQ_MODEL`, `BUFFER_DRY_RUN`, `RETENTION_DAYS`
+
+The social-sentiment workflow requires `DATABASE_URL` (the Supabase pooled connection URL). Add it as an Actions secret; the workflow checks for it before installing dependencies. To collect and analyze X posts, also configure `X_API_BEARER_TOKEN` and at least one of `GEMINI_API_KEY` or `GROQ_API_KEY`.
 
 Workflows:
 
