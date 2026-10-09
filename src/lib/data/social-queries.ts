@@ -11,7 +11,7 @@ import { getXProvider } from "../social/x-provider";
 const FRESH_X_MS = 2 * 3600_000;
 const SIGNAL_RETENTION_MS = 8 * 86400_000;
 const NEWS_LOOKBACK_MS = 24 * 3600_000;
-const MAX_SIGNALS = 5000;
+const MAX_SIGNALS = 250;
 const MAX_NEWS_ANALYSES = 500;
 const MAX_EVIDENCE = 120;
 
@@ -47,7 +47,7 @@ export async function getSocialSentimentWorkspace() {
   if (!hasDatabase()) {
     return {
       configuredX, configuredAi, lastRun: null, activeProfiles: 0, profilesWithErrors: 0,
-      overall: null, signals: [], staleSignals: [], weeklySignals: [], newsFallbacks: [],
+      overall: null, signals: [], staleSignals: [], weeklySignals: [], newsFallbacks: [], signalsTruncated: false,
     };
   }
 
@@ -55,6 +55,7 @@ export async function getSocialSentimentWorkspace() {
   const now = new Date();
   const signalCutoff = new Date(now.getTime() - SIGNAL_RETENTION_MS);
   const freshCutoff = new Date(now.getTime() - FRESH_X_MS);
+  const newsCutoff = new Date(now.getTime() - NEWS_LOOKBACK_MS);
   const [signalRows, profileRows, [lastRun], overallRows, newsRows] = await Promise.all([
     db.select({
       id: schema.socialSignals.id,
@@ -79,7 +80,7 @@ export async function getSocialSentimentWorkspace() {
         gte(schema.socialSignals.occurredAt, signalCutoff),
       ))
       .orderBy(desc(schema.socialSignals.occurredAt))
-      .limit(MAX_SIGNALS),
+      .limit(MAX_SIGNALS + 1),
     db.select({
       active: schema.trackedAccounts.active,
       consecutiveFailures: schema.trackedAccountCursors.consecutiveFailures,
@@ -111,31 +112,36 @@ export async function getSocialSentimentWorkspace() {
     }).from(schema.aiAnalyses)
       .where(and(
         eq(schema.aiAnalyses.kind, "news_sentiment_fallback"),
-        gte(schema.aiAnalyses.createdAt, signalCutoff),
+        gte(schema.aiAnalyses.createdAt, newsCutoff),
       ))
       .orderBy(desc(schema.aiAnalyses.createdAt))
       .limit(MAX_NEWS_ANALYSES),
   ]);
 
+  const signalsTruncated = signalRows.length > MAX_SIGNALS;
+  const boundedSignalRows = signalRows.slice(0, MAX_SIGNALS);
   const overall = aggregateSentiment(overallRows);
-  const windowHours = (row: (typeof signalRows)[number]) => Number(row.dimensions.windowHours ?? 2);
-  const latestByAsset = (rows: typeof signalRows) => {
-    const latest = new Map<string, (typeof signalRows)[number]>();
+  const windowHours = (row: (typeof boundedSignalRows)[number]) => Number(row.dimensions.windowHours ?? 2);
+  const latestByAsset = (rows: typeof boundedSignalRows) => {
+    const latest = new Map<string, (typeof boundedSignalRows)[number]>();
     for (const row of rows) if (!latest.has(row.assetId)) latest.set(row.assetId, row);
     return [...latest.values()];
   };
-  const shortRows = signalRows.filter((row) => windowHours(row) === 2);
-  const weeklyRows = signalRows.filter((row) => windowHours(row) === 168);
+  const shortRows = boundedSignalRows.filter((row) => windowHours(row) === 2);
+  const weeklyRows = boundedSignalRows.filter((row) => windowHours(row) === 168);
   const trendByAsset = new Map<string, number[]>();
   for (const row of [...shortRows].reverse()) {
-    trendByAsset.set(row.assetId, [...(trendByAsset.get(row.assetId) ?? []), row.score]);
+    const trend = trendByAsset.get(row.assetId);
+    if (trend) trend.push(row.score);
+    else trendByAsset.set(row.assetId, [row.score]);
   }
   const latestShort = latestByAsset(shortRows);
   const freshRows = latestShort.filter((row) => {
     const latestPublishedAt = row.dimensions.latestPublishedAt;
     return typeof latestPublishedAt === "string" && Date.parse(latestPublishedAt) >= freshCutoff.getTime();
   });
-  const staleRows = latestShort.filter((row) => !freshRows.some((fresh) => fresh.assetId === row.assetId));
+  const freshAssetIds = new Set(freshRows.map((row) => row.assetId));
+  const staleRows = latestShort.filter((row) => !freshAssetIds.has(row.assetId));
   const latestWeekly = latestByAsset(weeklyRows);
   const evidenceSignalIds = [...freshRows, ...staleRows, ...latestWeekly].map((signal) => signal.id);
   const evidence = evidenceSignalIds.length ? await db.select({
@@ -202,7 +208,7 @@ export async function getSocialSentimentWorkspace() {
     }];
   }).sort((a, b) => b.latestAt.localeCompare(a.latestAt));
 
-  const mapSignal = (signal: (typeof signalRows)[number]) => ({
+  const mapSignal = (signal: (typeof boundedSignalRows)[number]) => ({
     ...signal,
     occurredAt: signal.occurredAt.toISOString(),
     marketTracked: Boolean(signal.providerAssetId),
@@ -242,5 +248,6 @@ export async function getSocialSentimentWorkspace() {
     staleSignals: staleRows.map(mapSignal),
     weeklySignals: latestWeekly.map(mapSignal),
     newsFallbacks,
+    signalsTruncated,
   };
 }

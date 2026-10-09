@@ -14,7 +14,7 @@ export default function ThemeToggle() {
     const currentTheme = savedTheme === "light" ? "light" : "dark";
     document.documentElement.dataset.theme = currentTheme;
     const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-    if (themeColor) themeColor.content = currentTheme === "light" ? "#f4f7f5" : "#000000";
+    if (themeColor) themeColor.content = currentTheme === "light" ? "#e6ebe6" : "#000000";
     setTheme(currentTheme);
   }, []);
 
@@ -22,7 +22,7 @@ export default function ThemeToggle() {
     const nextTheme = theme === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = nextTheme;
     const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-    if (themeColor) themeColor.content = nextTheme === "light" ? "#f4f7f5" : "#000000";
+    if (themeColor) themeColor.content = nextTheme === "light" ? "#e6ebe6" : "#000000";
     localStorage.setItem(STORAGE_KEY, nextTheme);
     setTheme(nextTheme);
   }
