@@ -1,0 +1,31 @@
+name: Daily cleanup
+
+on:
+  schedule:
+    - cron: "40 2 * * *" # 02:40 UTC, a quiet hour between ingests
+  workflow_dispatch: {}
+
+concurrency:
+  group: cleanup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run job:cleanup
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL }}
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          RETENTION_DAYS: ${{ vars.RETENTION_DAYS || '30' }}

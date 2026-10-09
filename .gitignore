@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+*.tsbuildinfo
+.next/
+.env*
+!.env.example
+
+# Mongo→Postgres importer resume state (local only, never committed)
+scripts/db/.import-state.json

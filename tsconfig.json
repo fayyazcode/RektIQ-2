@@ -1,0 +1,78 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "noUncheckedIndexedAccess": false,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "allowJs": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/app/**/*.ts",
+    "src/app/**/*.tsx",
+    "src/components/**/*.ts",
+    "src/components/**/*.tsx",
+    "src/lib/jobs/**/*.ts",
+    "src/lib/score/**/*.ts",
+    "src/lib/signals/**/*.ts",
+    "src/lib/anomalies/**/*.ts",
+    "src/lib/news/**/*.ts",
+    "src/lib/social/**/*.ts",
+    "src/lib/ai-intel/**/*.ts",
+    "src/lib/market/**/*.ts",
+    "src/lib/feeds/**/*.ts",
+    "src/lib/normalize/**/*.ts",
+    "src/lib/ai/**/*.ts",
+    "src/lib/config.ts",
+    "src/lib/env.ts",
+    "src/lib/settings.ts",
+    "src/lib/notify-site.ts",
+    "src/lib/github.ts",
+    "src/lib/auth/**/*.ts",
+    "src/lib/supabase/**/*.ts",
+    "src/lib/prices.ts",
+    "src/lib/format.ts",
+    "src/lib/types.ts",
+    "src/lib/api/**/*.ts",
+    "src/app/api/**/*.ts",
+    "src/app/(site)/**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "scripts",
+    "scripts/**/*",
+    "tests",
+    "tests/**/*",
+    "src/lib/data/**/*",
+    "src/app/admin/actions.ts",
+    "src/app/admin/**/*.tsx",
+    "src/lib/ai-intel/explainer.ts",
+    "src/lib/db-info.ts",
+    "src/lib/db/client.ts"
+  ]
+}

@@ -1,0 +1,34 @@
+name: Social sentiment collector
+
+on:
+  schedule:
+    - cron: "0 */2 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: social-sentiment
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  social-sentiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run job:social-sentiment
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          X_API_BEARER_TOKEN: ${{ secrets.X_API_BEARER_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.5-flash-lite' }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL || 'openai/gpt-oss-20b' }}
+          AI_PROVIDER_ORDER: ${{ vars.AI_PROVIDER_ORDER || 'groq,gemini' }}

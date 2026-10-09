@@ -1,0 +1,52 @@
+name: Hourly ingest
+
+# News check every hour at :17, then the breaking-alert check (posts an important new story
+# straight away). For punctual runs, also trigger this workflow from an external scheduler
+# such as cron-job.org: GitHub's free scheduler often starts runs late or skips them.
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: ingest
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write # used by the keep-alive step below
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run job:ingest
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL }}
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.5-flash-lite' }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL || 'openai/gpt-oss-20b' }}
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+          BUFFER_CHANNEL_ID: ${{ vars.BUFFER_CHANNEL_ID || secrets.BUFFER_CHANNEL_ID }}
+          BUFFER_ORG_ID: ${{ vars.BUFFER_ORG_ID }}
+          BUFFER_DRY_RUN: ${{ vars.BUFFER_DRY_RUN || 'false' }}
+      # Public repos: GitHub pauses scheduled workflows after 60 days without activity.
+      # Re-enabling them here keeps the schedules alive (harmless on private repos).
+      - name: Keep schedules alive
+        if: always()
+        run: |
+          for wf in hourly-ingest.yml daily-posts.yml daily-cleanup.yml post-sync.yml; do
+            gh api -X PUT "repos/${{ github.repository }}/actions/workflows/$wf/enable" || true
+          done
+        env:
+          GH_TOKEN: ${{ github.token }}

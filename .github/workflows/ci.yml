@@ -1,0 +1,25 @@
+name: CI
+
+# Pull requests and manual runs only, to save Actions minutes on a private repo.
+# The Vercel build runs the same secret and workflow checks on every deploy.
+on:
+  pull_request: {}
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check:workflows
+      - run: npm run check:secrets
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://example.com

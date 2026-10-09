@@ -1,0 +1,36 @@
+name: Post sync
+
+# Records what Buffer did with each post (sent + link on X, or failed) and imports posts
+# made directly in Buffer. Every 2 hours (fits GitHub's free minutes); a run only calls Buffer's API when a post is
+# waiting to be confirmed, plus a full import every 3 hours (free plan: ~100 requests/day).
+on:
+  schedule:
+    - cron: "45 */2 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: post-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run job:sync-posts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL }}
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+          BUFFER_CHANNEL_ID: ${{ vars.BUFFER_CHANNEL_ID || secrets.BUFFER_CHANNEL_ID }}
+          BUFFER_ORG_ID: ${{ vars.BUFFER_ORG_ID }}

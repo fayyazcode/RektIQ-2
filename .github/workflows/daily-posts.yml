@@ -1,0 +1,47 @@
+name: Daily posts
+
+# Rolling: each run writes the posts whose time slot is in the next ~2.5 hours, from the
+# freshest top stories (the hourly ingest keeps those current). Slots, posts per day and
+# the posting window are set in Admin → Settings. Runs with nothing due finish in seconds.
+on:
+  schedule:
+    - cron: "5 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Write all of today's remaining posts now (or one extra post if none are left)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: daily-posts
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  posts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run job:posts
+        env:
+          FORCE: ${{ inputs.force }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL }}
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.5-flash-lite' }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL || 'openai/gpt-oss-20b' }}
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+          BUFFER_CHANNEL_ID: ${{ vars.BUFFER_CHANNEL_ID || secrets.BUFFER_CHANNEL_ID }}
+          BUFFER_ORG_ID: ${{ vars.BUFFER_ORG_ID }}
+          BUFFER_DRY_RUN: ${{ vars.BUFFER_DRY_RUN || 'false' }}
