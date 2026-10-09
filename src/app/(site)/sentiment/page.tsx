@@ -55,6 +55,7 @@ export default async function SentimentPage() {
           <div><h2 id="latest-signals" className="m-0 font-mono text-xl">Latest asset signals</h2><p className="m-0 mt-1 text-xs text-muted">Requires at least two independent accounts in agreement. Fast consensus uses two hours; rolling consensus uses stored posts up to seven days.</p></div>
           <Link href="/admin/profiles" className="chip-link">Tracked profiles</Link>
         </div>
+        {workspace.signalsTruncated && <p className="m-0 text-xs text-amber" role="status">Showing the latest signals only; older results are hidden to keep this workspace responsive.</p>}
         {!workspace.signals.length ? (
           <div className="panel p-6">
             <p className="m-0 font-semibold">No fresh X sentiment signals.</p>
