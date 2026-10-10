@@ -3,6 +3,7 @@ import { getCurrentMember, isApprovedMember, memberStatusPath } from "@/lib/auth
 import PageHero from "@/components/PageHero";
 import Link from "next/link";
 import { getSocialSentimentWorkspace } from "@/lib/data/social-queries";
+import { signOutAction } from "@/app/member/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,10 @@ export default async function SentimentPage() {
       <section aria-labelledby="pipeline-status" className="panel grid gap-3 p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 id="pipeline-status" className="label m-0 text-phosphor">Collection status</h2>
-          <span className="text-xs text-muted">Fetches the latest 2 hours · analyzes stored posts up to 7 days</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs text-muted">Fetches the latest 2 hours · analyzes stored posts up to 7 days</span>
+            <form action={signOutAction}><button className="btn btn-ghost !text-sm !py-1 !px-2 !min-h-0">Sign out</button></form>
+          </div>
         </div>
         <ul className="m-0 grid list-none gap-2 p-0 text-sm sm:grid-cols-2">
           <li className="flex gap-2"><span className={workspace.configuredX ? "text-phosphor" : "text-amber"} aria-hidden="true">{workspace.configuredX ? "●" : "▲"}</span>{workspace.configuredX ? `${workspace.activeProfiles} tracked profiles configured` : "X collection is waiting for the X API bearer token."}</li>
