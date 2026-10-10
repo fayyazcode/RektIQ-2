@@ -23,7 +23,7 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, them
 
 /** Old hash-router URLs (/#/articles/â€¦) â†’ new routes. Runs before hydration. */
 const LEGACY_HASH_REDIRECT = `(function(){var h=location.hash;if(h.indexOf("#/")!==0)return;var p=h.slice(1);var m={"/articles":"/news","/posts":"/posts","/admin":"/admin"};var t=m[p]||(p.indexOf("/admin")===0?"/admin":p.indexOf("/articles")===0?"/news":"/");location.replace(t);})();`;
-const THEME_INITIALIZER = `(function(){var t=localStorage.getItem("reckt-iq-theme")==="light"?"light":"dark";var e=document.documentElement;e.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="light"?"#f4f7f5":"#000000";})();`;
+const THEME_INITIALIZER = `(function(){var t=localStorage.getItem("reckt-iq-theme")==="light"?"light":"dark";var e=document.documentElement;e.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="light"?"#e6ebe6":"#000000";})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

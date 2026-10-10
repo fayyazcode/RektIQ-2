@@ -882,7 +882,7 @@ async function evaluateSocialSignalOutcomes(now: Date) {
     .innerJoin(schema.assets, eq(schema.socialSignals.assetId, schema.assets.id))
     .where(and(
     eq(schema.socialSignalOutcomes.status, "pending"),
-    sql`${schema.socialSignals.occurredAt} + (${schema.socialSignalOutcomes.horizonHours} * interval '1 hour') <= ${now}`,
+    sql`${schema.socialSignals.occurredAt} + (${schema.socialSignalOutcomes.horizonHours} * interval '1 hour') <= ${now.toISOString()}::timestamptz`,
     ))
     .orderBy(asc(schema.socialSignalOutcomes.updatedAt))
     .limit(30);
